@@ -8,11 +8,23 @@
       table { border-collapse: collapse; width: 400px; }
       th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
       th { background-color: #f2f2f2; }
-      button { margin-top: 20px; padding: 10px 20px; }
+      button, input { margin-top: 10px; padding: 8px 12px; }
+      #search-result { margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
     <h1>Курсы валют (NBRB)</h1>
+
+    <!-- Поиск валюты -->
+    <div>
+        <label for="search-code">Поиск по коду валюты (например, USD): </label>
+        <input type="text" id="search-code" maxlength="3" />
+        <button id="search-btn">Найти</button>
+    </div>
+    <div id="search-result"></div>
+
+    <!-- Таблица основных валют -->
+    <h2 style="margin-top: 30px;">Основные валюты (USD, EUR, RUB)</h2>
     <table>
         <thead>
             <tr>
@@ -58,13 +70,43 @@
             }
         }
 
+        // Обновление по кнопке
         document.getElementById('refresh-btn').addEventListener('click', fetchRates);
 
-        // Автообновление каждые 60 секунд
+        // Автообновление каждые 60 сек
         setInterval(fetchRates, 60000);
 
-        // Загрузка данных при старте
+        // Загрузка при открытии страницы
         fetchRates();
+
+        // Поиск по коду валюты
+        document.getElementById('search-btn').addEventListener('click', async () => {
+            const code = document.getElementById('search-code').value.trim().toUpperCase();
+            const resultDiv = document.getElementById('search-result');
+
+            if (!code || code.length !== 3) {
+                resultDiv.textContent = 'Введите корректный трёхбуквенный код валюты';
+                return;
+            }
+
+            resultDiv.textContent = 'Идёт поиск...';
+
+            try {
+                const response = await fetch(`/rates/search?code=${code}`);
+                if (response.status === 404) {
+                    resultDiv.textContent = 'Валюта не найдена';
+                    return;
+                }
+                if (!response.ok) throw new Error('Ошибка запроса');
+
+                const data = await response.json();
+                const rate = (data.Cur_OfficialRate / data.Cur_Scale).toFixed(4);
+                resultDiv.textContent = `${data.Cur_Abbreviation} (${data.Cur_Name}): ${rate}`;
+            } catch (error) {
+                resultDiv.textContent = 'Ошибка при поиске';
+                console.error(error);
+            }
+        });
     </script>
 </body>
 </html>

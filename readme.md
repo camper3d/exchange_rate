@@ -1,5 +1,6 @@
 1.
 Версия Python 3.12
+
 Устанавливаем зависимости при помощи команды:
 pip install -r requirements.txt
 
